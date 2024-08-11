@@ -21,6 +21,8 @@ pip install -r requirements.txt
 ```
 ### Run the Application
 
+Add a .env file with a key from visualcrossing.com if you want weather tool
+
 Start the Uvicorn server with the following command:
 ```bash
 uvicorn app:app --host 0.0.0.0 --port 8000 --reload
