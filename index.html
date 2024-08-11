@@ -61,6 +61,7 @@
     <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.bundle.min.js"></script>
     <script>
         let sessionId = null;
+        let socket = null;
 
         // Fetch a new session ID when the page loads
         $(document).ready(function() {
@@ -68,6 +69,7 @@
                 .then(response => response.json())
                 .then(data => {
                     sessionId = data.session_id;
+                    openWebSocket();
                 })
                 .catch(error => console.error('Error fetching session ID:', error));
 
@@ -79,6 +81,22 @@
             });
         });
 
+        function openWebSocket() {
+            socket = new WebSocket(`ws://${window.location.host}/ws/${sessionId}`);
+
+            socket.onmessage = function(event) {
+                document.getElementById("user-input").placeholder = event.data;
+            };
+
+            socket.onclose = function(event) {
+                console.error('WebSocket closed: ', event);
+            };
+
+            socket.onerror = function(error) {
+                console.error('WebSocket error: ', error);
+            };
+        }
+
         async function sendMessage() {
             const userInputElement = document.getElementById("user-input");
             const userInput = userInputElement.value;
@@ -88,9 +106,6 @@
             userInputElement.value = "";
             userInputElement.disabled = true;
             userInputElement.placeholder = "Processing...";
-
-            // Show loading indicator
-            document.getElementById("loading-indicator").style.display = "block";
 
             const response = await fetch("/chat/", {
                 method: "POST",
@@ -104,9 +119,6 @@
             const messagesDiv = document.getElementById("messages");
             messagesDiv.innerHTML += `<div class="message user"><strong>You:</strong> ${userInput}</div>`;
             messagesDiv.innerHTML += `<div class="message ai"><strong>AI:</strong> ${data.response}</div>`;
-
-            // Hide loading indicator
-            document.getElementById("loading-indicator").style.display = "none";
 
             // Re-enable the input and reset the placeholder
             userInputElement.disabled = false;

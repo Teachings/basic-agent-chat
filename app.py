@@ -1,6 +1,5 @@
-from fastapi import FastAPI, Request, Depends, HTTPException
-from fastapi.responses import HTMLResponse, JSONResponse
-from fastapi.middleware.cors import CORSMiddleware
+from fastapi import FastAPI, WebSocket, WebSocketDisconnect
+from fastapi.responses import HTMLResponse
 from pydantic import BaseModel
 from typing import Dict, List
 import requests
@@ -9,15 +8,6 @@ import uuid
 
 app = FastAPI()
 
-# Enable CORS for your frontend to access the API (adjust origins as necessary)
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=["*"],
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
-)
-
 # In-memory storage for session-based conversation history
 session_store: Dict[str, List[Dict]] = {}
 
@@ -25,6 +15,25 @@ session_store: Dict[str, List[Dict]] = {}
 class UserInput(BaseModel):
     session_id: str
     message: str
+
+# WebSocket manager to handle connections and messages
+class ConnectionManager:
+    def __init__(self):
+        self.active_connections: Dict[str, WebSocket] = {}
+
+    async def connect(self, websocket: WebSocket, session_id: str):
+        await websocket.accept()
+        self.active_connections[session_id] = websocket
+
+    def disconnect(self, session_id: str):
+        self.active_connections.pop(session_id, None)
+
+    async def send_personal_message(self, message: str, session_id: str):
+        websocket = self.active_connections.get(session_id)
+        if websocket:
+            await websocket.send_text(message)
+
+manager = ConnectionManager()
 
 # Replace with your actual functions and imports
 from tool_weather import get_weather
@@ -124,7 +133,7 @@ def add_tool_results(tool_calls):
             print(f"No tool function found for {function_name}")
     return tool_messages
 
-def send_request(messages):
+async def send_request(messages, session_id: str):
     payload = {
         "model": model,
         "messages": messages,
@@ -132,12 +141,14 @@ def send_request(messages):
         "keep_alive": "-1"
     }
 
+    await manager.send_personal_message("Sending request to AI model...", session_id)
     response = requests.post(api_url, headers=headers, data=json.dumps(payload))
 
     if response.status_code == 200:
         return response.json()
     else:
         print(f"Error: {response.status_code}, {response.text}")
+        await manager.send_personal_message(f"Error: {response.status_code}, {response.text}", session_id)
         return None
 
 @app.post("/chat/")
@@ -151,7 +162,8 @@ async def chat(input: UserInput):
     messages = session_store[session_id]
     messages.append(UserMessage(user_input).to_dict())
     
-    response_data = send_request(messages)
+    await manager.send_personal_message("Processing your message...", session_id)
+    response_data = await send_request(messages, session_id)
     
     if response_data:
         ai_message = extract_llm_response(response_data)
@@ -159,21 +171,34 @@ async def chat(input: UserInput):
         
         tool_calls = ai_message.tool_calls
         if tool_calls:
+            await manager.send_personal_message("Processing tool calls...", session_id)
             tool_messages = add_tool_results(tool_calls)
             messages.extend(tool_messages)
-            final_response_data = send_request(messages)
+            final_response_data = await send_request(messages, session_id)
             if final_response_data:
                 final_message = extract_llm_response(final_response_data)
                 messages.append(final_message.to_dict())
                 session_store[session_id] = messages  # Update session with new messages
+                await manager.send_personal_message(final_message.content, session_id)
                 return {"response": final_message.content}
             else:
                 return {"response": "Error during final processing."}
         else:
             session_store[session_id] = messages  # Update session with new messages
+            await manager.send_personal_message(ai_message.content, session_id)
             return {"response": ai_message.content}
     else:
         return {"response": "Error processing the request."}
+
+@app.websocket("/ws/{session_id}")
+async def websocket_endpoint(websocket: WebSocket, session_id: str):
+    await manager.connect(websocket, session_id)
+    try:
+        while True:
+            # Keep the connection alive, we don't need to receive messages from the client
+            await websocket.receive_text()
+    except WebSocketDisconnect:
+        manager.disconnect(session_id)
 
 @app.get("/session/")
 async def get_session_id():
