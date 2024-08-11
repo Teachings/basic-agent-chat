@@ -3,3 +3,4 @@ termcolor
 requests
 wikipedia-api
 beautifulsoup4
+streamlit
