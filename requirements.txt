@@ -1,6 +1,9 @@
+pydantic
 python-dotenv
 termcolor
 requests
 wikipedia-api
 beautifulsoup4
 aiohttp
+fastapi 
+uvicorn

@@ -19,9 +19,22 @@ Install the required dependencies from `requirements.txt`:
 ```bash
 pip install -r requirements.txt
 ```
-### Run the Application
 
-Add a .env file with a key from visualcrossing.com if you want weather tool
+### Additional Steps
+
+1. Add a .env file with a key from visualcrossing.com if you want weather tool
+2. Install Ollama and/or set the correct api url for any OpenAI compatible llm server
+
+In app.py look for the below line and fix it. 
+
+`api_url = "http://ai.mtcl.lan:11436/v1/chat/completions"`
+
+If your ollama server is locally installed, most likely that line should look like this:
+
+`api_url = "http://localhost:11434/v1/chat/completions"`
+
+
+### Run the Application
 
 Start the Uvicorn server with the following command:
 ```bash

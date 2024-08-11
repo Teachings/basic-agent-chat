@@ -72,8 +72,8 @@ def fetch_page_summary(url: str, headers: dict) -> str:
     except requests.RequestException as e:
         return "Could not retrieve content."
 
-# Example usage
-query = "Python programming"
-search_results = search_searxng(query)
-if search_results:
-    print(search_results)
+# # Example usage
+# query = "Python programming"
+# search_results = search_searxng(query)
+# if search_results:
+#     print(search_results)
