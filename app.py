@@ -39,6 +39,7 @@ manager = ConnectionManager()
 from tool_weather import get_weather
 from tool_wikipedia import lookup_wikipedia
 from tool_internet_search import search_duckduckgo
+from tool_searxng_search import search_searxng
 from messages import AIMessage, UserMessage, ToolMessage, SystemMessage  # Import the message classes
 
 # Define the OpenAI endpoint and API key
@@ -57,13 +58,16 @@ headers = {
 # Collect tool definitions from decorated functions
 tools = [get_weather.tool_definition,
          lookup_wikipedia.tool_definition,
-         search_duckduckgo.tool_definition]
+        #  search_duckduckgo.tool_definition,
+         search_searxng.tool_definition
+         ]
 
 # Define a dictionary of tool functions
 tool_functions = {
     "get_weather": get_weather,
     "lookup_wikipedia": lookup_wikipedia,
-    "search_duckduckgo": search_duckduckgo
+    # "search_duckduckgo": search_duckduckgo,
+    "search_searxng": search_searxng
 }
 
 SYSTEM_MESSAGE_CONTENT = """
@@ -75,7 +79,7 @@ You have access to the following tools, and you may use multiple tools to achiev
 
 2. **Wikipedia Tool**: This tool allows you to look up general information on Wikipedia. Use this tool when the user asks for specific factual information that is likely to be found in an encyclopedia, such as historical events, biographies, definitions, or scientific facts. Format the query accurately to retrieve the most relevant information.
 
-3. **DuckDuckGo Search Tool**: This tool enables you to perform a web search using DuckDuckGo. Use this tool when the user requests information that is more current, trending, or might not be found in a static encyclopedia, such as news, recent events, or niche queries. Ensure that the search query is specific and relevant to yield accurate results.
+3. **Searxng Search Tool**: This tool enables you to perform a web search. Use this tool when the user requests information that is more current, trending, or might not be found in a static encyclopedia, such as news, recent events, or niche queries. Ensure that the search query is specific and relevant to yield accurate results.
 
 When using multiple tools for the same purpose, you should:
 - Ensure that each query is formatted correctly and tailored to the specific tool being used.
@@ -116,7 +120,9 @@ def add_tool_results(tool_calls):
                 required_args = ["location"]
             elif function_name == "lookup_wikipedia":
                 required_args = ["query"]
-            elif function_name == "search_duckduckgo":
+            # elif function_name == "search_duckduckgo":
+            #     required_args = ["query"]
+            elif function_name == "search_searxng":
                 required_args = ["query"]
 
             missing_args = [arg for arg in required_args if arg not in arguments or not arguments[arg]]
