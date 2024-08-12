@@ -5,6 +5,11 @@ from typing import Dict, List
 import requests
 import json
 import uuid
+import os
+from dotenv import load_dotenv
+
+# Load environment variables from .env file
+load_dotenv()
 
 app = FastAPI()
 
@@ -43,11 +48,11 @@ from tool_searxng_search import search_searxng
 from messages import AIMessage, UserMessage, ToolMessage, SystemMessage  # Import the message classes
 
 # Define the OpenAI endpoint and API key
-api_url = "http://ai.mtcl.lan:11436/v1/chat/completions"
-api_key = "no_api_key_required"
+api_url = os.getenv("API_URL", "http://ai.mtcl.lan:11436/v1/chat/completions")
+api_key = os.getenv("API_KEY", "default_api_key")
 
 # Define the model being used
-model = "llama3.1:70b" #llama3.1:70b #llama3.1:8b-instruct-q8_0
+model = os.getenv("MODEL", "llama3.1:8b-instruct-q8_0") #llama3.1:70b 
 
 # Make the request to the OpenAI API
 headers = {
