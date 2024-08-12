@@ -24,7 +24,11 @@ pip install -r requirements.txt
 
 ### Additional Steps
 
-1. Add a `.env` file with the following keys:
+1. Install Ollama and/or set the correct API URL for any OpenAI-compatible LLM server in point 3. 
+
+2. For the weather tool, add a key from visualcrossing.com and populate in point 3.
+
+3. Add a `.env` file with the following keys:
 
     ```plaintext
     API_URL=http://localhost:11434/v1/chat/completions
@@ -33,15 +37,6 @@ pip install -r requirements.txt
     VISUAL_CROSSING_API_KEY=your_key
     ```
 
-   - For the weather tool, add a key from visualcrossing.com.
-
-2. Install Ollama and/or set the correct API URL for any OpenAI-compatible LLM server.
-
-   In `main.py`, ensure the `api_url` is set correctly. For example, if your Ollama server is locally installed, the line should look like this:
-
-    ```python
-    api_url = "http://localhost:11434/v1/chat/completions"
-    ```
 
 ### Run the Application
 
@@ -83,7 +78,7 @@ If you prefer to run the application inside a Docker container, follow these ste
     - Run the Docker container using the following command:
 
     ```bash
-    docker run --env-file .env -p 8000:8000 basic-agent-chat --name basic-agent-chat
+    docker run --env-file .env -p 8000:8000 basic-agent-chat
     ```
 
     - This command will start the application inside a Docker container, exposing it on port `8000`.
